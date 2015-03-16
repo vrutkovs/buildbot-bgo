@@ -13,6 +13,9 @@ class BuildStep(BuildStep, ShellMixin):
         BuildStep.__init__(self, **kwargs)
         self.addLogObserver('stdio', LineConsumerLogObserver(self.logConsumer))
 
+    def getFinalState(self):
+        return self.describe(True)
+
     def getCurrentSummary(self):
         if self.currentComponent:
             return {u'step': u"Building %s" % self.currentComponent}
