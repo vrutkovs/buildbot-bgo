@@ -1,6 +1,7 @@
 from buildbot.process.logobserver import LineConsumerLogObserver
 from buildbot.process.buildstep import BuildStep, ShellMixin
 import re
+from twisted.internet import defer
 
 
 class BuildStep(BuildStep, ShellMixin):
@@ -21,6 +22,10 @@ class BuildStep(BuildStep, ShellMixin):
             return {u'step': u"Building %s" % self.currentComponent}
         else:
             return {u'step': u"Starting"}
+
+    @defer.inlineCallbacks
+    def run(self):
+        super(BuildStep, self).run()
 
     def logConsumer(self):
         while True:
