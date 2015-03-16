@@ -9,4 +9,4 @@ class CurrentComponentObserver(util.LogLineObserver):
         m = self._line_re.search(line.strip())
         if m:
             component, result = m.groups()
-            self.step.setProgress('component', component)
+            self.step.updateSummary('Building %s' % component)
