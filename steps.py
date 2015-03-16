@@ -1,34 +1,22 @@
 from buildbot.process.logobserver import LineConsumerLogObserver
-from buildbot.process.buildstep import BuildStep, ShellMixin
-from buildbot.process import remotecommand
-from twisted.internet import defer
+from buildbot.steps import ShellCommand
 import re
 
 
-class BuildStep(BuildStep, ShellMixin):
+class BuildStep(ShellCommand):
     new_build_re = re.compile(r'^Need rebuild of ([\w\.]+)/\.$')
     finished_build_re = re.compile(r'^Subtask commit build of gnome-continuous/components/([\w\.]+)/x86_64/\.$')
     currentComponent = ''
 
     def __init__(self, **kwargs):
-        kwargs = self.setupShellMixin(kwargs)
-        BuildStep.__init__(self, **kwargs)
+        ShellCommand.__init__(self, **kwargs)
         self.addLogObserver('stdio', LineConsumerLogObserver(self.logConsumer))
-
-    def getFinalState(self):
-        return self.describe(True)
 
     def getCurrentSummary(self):
         if self.currentComponent:
             return {u'step': u"Building %s" % self.currentComponent}
         else:
             return {u'step': u"Starting"}
-
-    @defer.inlineCallbacks
-    def run(self):
-        cmd = remotecommand.RemoteCommand(self.command)
-        yield self.runCommand(cmd)
-        yield self.convertResult(cmd)
 
     def logConsumer(self):
         while True:
