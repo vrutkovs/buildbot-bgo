@@ -1,7 +1,8 @@
 from buildbot.process.logobserver import LineConsumerLogObserver
 from buildbot.process.buildstep import BuildStep, ShellMixin
-import re
+from buildbot.process import remotecommand
 from twisted.internet import defer
+import re
 
 
 class BuildStep(BuildStep, ShellMixin):
@@ -25,7 +26,9 @@ class BuildStep(BuildStep, ShellMixin):
 
     @defer.inlineCallbacks
     def run(self):
-        super(BuildStep, self).run()
+        cmd = remotecommand.RemoteCommand(self.command)
+        yield self.runCommand(cmd)
+        yield self.convertResult(cmd)
 
     def logConsumer(self):
         while True:
