@@ -25,6 +25,7 @@ class BuildStep(BuildStep, ShellMixin):
             m = self.new_build_re.search(line.strip())
             if m:
                 self.currentComponent, result = m.groups()
+                self.updateSummary()
             m = self.new_build_re.search(line.strip())
             if m:
                 component, result = m.groups()
