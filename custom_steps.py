@@ -1,5 +1,5 @@
 from buildbot.process.logobserver import LineConsumerLogObserver
-from buildbot.steps import ShellCommand
+from buildbot.steps.shell import ShellCommand
 import re
 
 
