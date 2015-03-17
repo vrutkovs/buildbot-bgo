@@ -48,12 +48,11 @@ class BuildStep(ShellCommand):
 
 class BGOPoller(PollingChangeSource, StateMixin):
     def __init__(self, workdir=None, pollInterval=5 * 60, pollAtLaunch=False,
-                 name=None):
+                 name='BGOPoller'):
         PollingChangeSource.__init__(self, name=name,
                                      pollInterval=pollInterval,
                                      pollAtLaunch=pollAtLaunch)
         self.lastRev = {}
-        self.name = 'BGOPoller'
 
     def activate(self):
         # make our workdir absolute, relative to the master's basedir
