@@ -1,5 +1,6 @@
 from buildbot.process.logobserver import LineConsumerLogObserver
 from buildbot.steps.shell import ShellCommand
+from buildbot.steps.source.base import Source
 import re
 
 
@@ -18,6 +19,9 @@ class BuildStep(ShellCommand):
         else:
             return {u'step': u"Starting"}
 
+    def getResultSummary(self):
+        return {u'step': u"Done"}
+
     def logConsumer(self):
         while True:
             stream, line = yield
@@ -32,3 +36,12 @@ class BuildStep(ShellCommand):
                 with open("local/build/log-%s.txt" % component, 'r') as f:
                     log_contents = f.read()
                 self.addCompleteLog('log-%s' % component, log_contents)
+
+
+class BGOSource(Source):
+    def __init__(self, repourl=None, baseURL=None, mode='incremental',
+                 method=None, defaultBranch=None, **kwargs):
+        pass
+
+    def startVC(self, branch, revision, patch):
+        pass
