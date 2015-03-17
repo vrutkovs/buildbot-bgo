@@ -1,7 +1,14 @@
+from buildbot.changes import PollingChangeSource
 from buildbot.process.logobserver import LineConsumerLogObserver
+from buildbot.util import json
+from buildbot.util.state import StateMixin
 from buildbot.steps.shell import ShellCommand
-from buildbot.steps.source.base import Source
+from twisted.internet import defer
+from twisted.internet import utils
+from twisted.python import log
+
 import re
+import os
 
 
 class BuildStep(ShellCommand):
@@ -38,10 +45,50 @@ class BuildStep(ShellCommand):
                 self.addCompleteLog('log-%s' % component, log_contents)
 
 
-class BGOSource(Source):
-    def __init__(self, repourl=None, baseURL=None, mode='incremental',
-                 method=None, defaultBranch=None, **kwargs):
-        pass
+class BGOPoller(PollingChangeSource, StateMixin):
+    def __init__(self, workdir=None, pollInterval=5 * 60, pollAtLaunch=False,
+                 name=None):
+        PollingChangeSource.__init__(self, name=name,
+                                     pollInterval=pollInterval,
+                                     pollAtLaunch=pollAtLaunch)
+        self.lastRev = {}
 
-    def startVC(self, branch, revision, patch):
-        pass
+    def activate(self):
+        # make our workdir absolute, relative to the master's basedir
+        if not os.path.isabs(self.workdir):
+            self.workdir = os.path.join(self.master.basedir, self.workdir)
+
+        log.msg("bgopoller: using workdir '%s'" % self.workdir)
+        d = self.getState('lastRev', {})
+
+        def setLastRev(lastRev):
+            self.lastRev = lastRev
+        d.addCallback(setLastRev)
+        d.addCallback(lambda _: PollingChangeSource.activate(self))
+        d.addErrback(log.err, 'while initializing BGOPoller')
+
+    def _dovccmd(self, command, path=None):
+        d = utils.getProcessOutputAndValue('ostbuild', ['make', '-n'] + command,
+                                           path=path, env=os.environ)
+
+        def _convert_nonzero_to_failure(res):
+            "utility to handle the result of getProcessOutputAndValue"
+            (stdout, stderr, code) = res
+            if code != 0:
+                raise EnvironmentError('command failed with exit code %d: %s'
+                                       % (code, stderr))
+            return stdout.strip()
+        d.addCallback(_convert_nonzero_to_failure)
+        return d
+
+    @defer.inlineCallbacks
+    def poll(self):
+        log.msg('bgopoller: running resolve & bdiff')
+        yield self._dovccmd(['resolve', 'fetchAll=true'], self.workdir)
+        yield self._dovccmd(['bdiff'], self.workdir)
+        log.msg('bgopoller: resolve & bdiff complete')
+        bdiff = json.load('local/bdiff.json')
+        log.msg('bgopoller: got bdiff: %s' % bdiff)
+        revs = {}
+        self.lastRev.update(revs)
+        yield self.setState('lastRev', self.lastRev)
