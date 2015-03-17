@@ -1,6 +1,7 @@
 from buildbot.changes.base import PollingChangeSource
 from buildbot.process.logobserver import LineConsumerLogObserver
 from buildbot.util import json
+from buildbot.util import ascii2unicode
 from buildbot.util.state import StateMixin
 from buildbot.steps.shell import ShellCommand
 from twisted.internet import defer
@@ -89,6 +90,32 @@ class BGOPoller(PollingChangeSource, StateMixin):
         log.msg('BGOPoller: resolve & bdiff complete')
         bdiff = json.load('local/bdiff.json')
         log.msg('BGOPoller: got bdiff: %s' % bdiff)
-        revs = {}
-        self.lastRev.update(revs)
+        rev = {}
+        for change_type in ['added', 'modified', 'removed']:
+            if 'gitlog' in bdiff[change_type].keys():
+                project = bdiff[change_type]['latest']['name']
+                src = bdiff[change_type]['latest']['src']
+                gitlog = bdiff[change_type]['gitlog']
+                for change in gitlog:
+                    rev = change
+                    yield self._process_changes(change, project, src)
+        self.lastRev = rev
         yield self.setState('lastRev', self.lastRev)
+
+    @defer.inlineCallbacks
+    def _process_changes(self, newRev, project, src):
+        revision = newRev['Checksum']
+        author = newRev['From']
+        timestamp = newRev['Date']
+
+        yield self.master.data.updates.addChange(
+            author=author,
+            revision=revision,
+            files=[],
+            comments=[],
+            when_timestamp=timestamp,
+            branch=project,
+            category=self.category,
+            project=self.project,
+            repository=ascii2unicode(src),
+            src=u'git')
