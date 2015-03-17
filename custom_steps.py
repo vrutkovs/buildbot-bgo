@@ -1,4 +1,4 @@
-from buildbot.changes import PollingChangeSource
+from buildbot.changes.base import PollingChangeSource
 from buildbot.process.logobserver import LineConsumerLogObserver
 from buildbot.util import json
 from buildbot.util.state import StateMixin
