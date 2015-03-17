@@ -53,6 +53,7 @@ class BGOPoller(PollingChangeSource, StateMixin):
                                      pollInterval=pollInterval,
                                      pollAtLaunch=pollAtLaunch)
         self.lastRev = {}
+        self.workdir = workdir
 
     def activate(self):
         # make our workdir absolute, relative to the master's basedir
