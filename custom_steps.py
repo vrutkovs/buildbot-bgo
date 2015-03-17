@@ -58,7 +58,7 @@ class BGOPoller(PollingChangeSource, StateMixin):
         if not os.path.isabs(self.workdir):
             self.workdir = os.path.join(self.master.basedir, self.workdir)
 
-        log.msg("bgopoller: using workdir '%s'" % self.workdir)
+        log.msg("BGOPoller: using workdir '%s'" % self.workdir)
         d = self.getState('lastRev', {})
 
         def setLastRev(lastRev):
@@ -83,12 +83,12 @@ class BGOPoller(PollingChangeSource, StateMixin):
 
     @defer.inlineCallbacks
     def poll(self):
-        log.msg('bgopoller: running resolve & bdiff')
+        log.msg('BGOPoller: running resolve & bdiff')
         yield self._dovccmd(['resolve', 'fetchAll=true'], self.workdir)
         yield self._dovccmd(['bdiff'], self.workdir)
-        log.msg('bgopoller: resolve & bdiff complete')
+        log.msg('BGOPoller: resolve & bdiff complete')
         bdiff = json.load('local/bdiff.json')
-        log.msg('bgopoller: got bdiff: %s' % bdiff)
+        log.msg('BGOPoller: got bdiff: %s' % bdiff)
         revs = {}
         self.lastRev.update(revs)
         yield self.setState('lastRev', self.lastRev)
