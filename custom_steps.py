@@ -47,7 +47,7 @@ class BuildStep(ShellCommand):
 
 
 class BGOPoller(PollingChangeSource, StateMixin):
-    def __init__(self, workdir=None, pollInterval=5 * 60, pollAtLaunch=False,
+    def __init__(self, workdir=None, pollInterval=5 * 60, pollAtLaunch=True,
                  name='BGOPoller'):
         PollingChangeSource.__init__(self, name=name,
                                      pollInterval=pollInterval,
