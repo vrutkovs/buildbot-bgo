@@ -21,12 +21,12 @@ class BuildStep(ShellCommand):
     def logConsumer(self):
         while True:
             stream, line = yield
-            m = self.new_build_re.search(line.strip())
-            if m:
+            m = self.new_build_re.match(line.strip())
+            if m is not None:
                 self.currentComponent = m.group(0)
                 self.updateSummary()
-            m = self.new_build_re.search(line.strip())
-            if m:
+            m = self.new_build_re.match(line.strip())
+            if m is not None:
                 component = m.group(0)
                 log_contents = ''
                 with open("local/build/log-%s.txt" % component, 'r') as f:
